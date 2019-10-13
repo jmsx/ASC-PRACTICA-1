@@ -1,0 +1,66 @@
+operatorset FuzzyMean {
+   defuz xfl.FuzzyMean();
+}
+
+type error_v [-5.0,5.0;256] {
+  negativo xfl.trapezoid(-7.5,-5.0,-2.5,0.0);
+  cero xfl.triangle(-2.5,0.0,2.5);
+  positivo xfl.trapezoid(0.0,2.5,5.0,7.5);
+}
+
+type aceleracion [-0.1,0.1;256] {
+  negativa xfl.singleton(-0.075);
+  cero xfl.singleton(0.0);
+  positiva xfl.singleton(0.075);
+}
+
+type X [-10.0,10.0;256] {
+  Bizquierda xfl.trapezoid(-13.333333333333334,-10.0,-6.666666666666666,-3.333333333333333);
+  Lizquierda xfl.triangle(-6.666666666666666,-3.333333333333333,0.0);
+  centro xfl.triangle(-3.333333333333333,0.0,3.333333333333334);
+  Lderecha xfl.triangle(0.0,3.333333333333334,6.666666666666668);
+  Bderecha xfl.trapezoid(3.333333333333333,6.666666666666666,10.0,13.333333333333334);
+}
+
+type Orientacion [-180.0,180.0;256] {
+  BGizq xfl.trapezoid(-240.0,-180.0,-120.0,-60.0);
+  LGizq xfl.triangle(-120.0,-60.0,0.0);
+  Gcent xfl.triangle(-60.0,0.0,60.0);
+  LGdch xfl.triangle(0.0,60.0,120.0);
+  BGdch xfl.trapezoid(60.0,120.0,180.0,240.0);
+}
+
+type Curvatura [-0.4,0.4;256] {
+  BGizq xfl.triangle(-0.6000000000000001,-0.4,-0.2);
+  LGizq xfl.triangle(-0.4,-0.2,0.0);
+  Gcent xfl.triangle(-0.2,0.0,0.20000000000000007);
+  LGdch xfl.triangle(0.0,0.20000000000000007,0.4);
+  BGdch xfl.triangle(0.2,0.4,0.6000000000000001);
+}
+
+type Y [-2.0,30.0;256] {
+  mf0 xfl.trapezoid(-7.333333333333333,-2.0,3.333333333333333,8.666666666666666);
+  mf1 xfl.triangle(3.333333333333333,8.666666666666666,14.0);
+  mf2 xfl.triangle(8.666666666666666,14.0,19.333333333333332);
+  mf3 xfl.triangle(14.0,19.333333333333332,24.666666666666664);
+  mf4 xfl.trapezoid(19.333333333333336,24.666666666666668,30.0,35.333333333333336);
+}
+
+rulebase ControlVelocidad (error_v error_v : aceleracion aceleracion) using FuzzyMean {
+  if(error_v == negativo) -> aceleracion = negativa;
+  if(error_v == cero) -> aceleracion = cero;
+  if(error_v == positivo) -> aceleracion = positiva;
+}
+
+rulebase ControlVolanteX (X X : Curvatura curvatura) using FuzzyMean {
+  if(X == Bizquierda) -> curvatura = BGdch;
+  if(X == Lizquierda) -> curvatura = LGdch;
+  if(X == centro) -> curvatura = Gcent;
+  if(X == Lderecha) -> curvatura = LGizq;
+  if(X == Bderecha) -> curvatura = BGizq;
+}
+
+system (X X, Orientacion Orientacion, error_v error_v, Y Y : aceleracion aceleracion, Curvatura curvatura) {
+  ControlVelocidad(error_v : aceleracion);
+  ControlVolanteX(X : curvatura);
+ }
